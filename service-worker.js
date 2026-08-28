@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jibyar-cache-v1';
+const CACHE_NAME = 'jibyar-cache-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -31,8 +31,10 @@ self.addEventListener('fetch', (event) => {
       if (cached) return cached;
       return fetch(event.request)
         .then((res) => {
-          const resClone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+          if (res && res.ok) {
+            const resClone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+          }
           return res;
         })
         .catch(() => caches.match('./index.html'));

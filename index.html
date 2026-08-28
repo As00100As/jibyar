@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>جیب‌یار — دستیار مالی شخصی</title>
 <meta name="theme-color" content="#2F6FED">
-<meta name="description" content="مدیریت درآمد، هزینه، کیف‌پول‌ها و گزارش‌های مالی شخصی">
+<meta name="description" content="مدیریت درآمد، هزینه، کیف‌پول‌ها، ارز دیجیتال و گزارش‌های مالی شخصی">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Lalezar&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
   :root{
@@ -25,12 +25,14 @@
     --expense-bg:#FDECEC;
     --purple:#7C6FE0;
     --purple-bg:#EFECFC;
+    --gold:#E0A82E;
     --text:#16213A;
     --text-dim:#7284A0;
     --border:#E7ECF6;
     --radius:18px;
     --radius-sm:12px;
     --shadow:0 6px 24px rgba(47,111,237,0.10);
+    --font-fun:'Lalezar', cursive;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -43,29 +45,64 @@
     -webkit-tap-highlight-color:transparent;
   }
   .wrap{max-width:640px;margin:0 auto;padding:0 16px;}
+  .hidden{display:none !important;}
+
+  /* ---------- Logo (inline, no external file needed) ---------- */
+  .logo-mark{
+    width:34px;height:34px;border-radius:10px;flex-shrink:0;
+    background:linear-gradient(160deg, #3B82F6 0%, #1E4FCC 100%);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .logo-mark svg{width:20px;height:15px;display:block;}
+  .logo-mark.lg{width:64px;height:64px;border-radius:18px;}
+  .logo-mark.lg svg{width:36px;height:27px;}
+
+  /* ---------- Auth screen ---------- */
+  #authScreen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg, var(--primary) 0%, var(--primary-dark) 100%);
+    padding:24px 16px;
+  }
+  .auth-card{
+    background:#fff;border-radius:24px;padding:28px 24px;max-width:380px;width:100%;
+    box-shadow:0 20px 50px rgba(0,0,0,0.25);text-align:center;
+  }
+  .auth-title{font-family:var(--font-fun);font-size:26px;margin:14px 0 2px;color:var(--text);}
+  .auth-sub{font-size:12.5px;color:var(--text-dim);margin-bottom:20px;line-height:1.9;}
+  .auth-field{text-align:right;margin-bottom:12px;}
+  .auth-field label{font-size:11.5px;color:var(--text-dim);display:block;margin-bottom:5px;}
+  .auth-field input{width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--border);background:var(--bg);font-size:14px;text-align:center;letter-spacing:2px;}
+  .auth-field input#signupName, .auth-field input#loginName{letter-spacing:normal;text-align:right;}
+  .auth-btn{
+    width:100%;background:var(--primary);color:#fff;border:none;border-radius:999px;
+    padding:12px;font-family:var(--font-fun);font-size:17px;cursor:pointer;margin-top:6px;
+  }
+  .auth-btn:hover{background:var(--primary-dark);}
+  .auth-switch{margin-top:16px;font-size:12.5px;color:var(--text-dim);}
+  .auth-switch a{color:var(--primary);cursor:pointer;font-weight:600;text-decoration:none;}
+  .auth-error{color:var(--expense);font-size:12px;margin-top:8px;min-height:16px;}
+  .auth-note{font-size:10.5px;color:var(--text-dim);margin-top:18px;line-height:1.8;border-top:1px dashed var(--border);padding-top:12px;}
 
   /* ---------- App bar ---------- */
   .appbar{
     background:linear-gradient(160deg, var(--primary) 0%, var(--primary-dark) 100%);
-    border-radius:0 0 28px 28px;
-    padding:22px 20px 26px;
-    color:#fff;
-    margin-bottom:20px;
-    box-shadow:var(--shadow);
+    border-radius:0 0 28px 28px;padding:22px 20px 26px;color:#fff;margin-bottom:20px;box-shadow:var(--shadow);
   }
   .appbar-top{display:flex;align-items:center;justify-content:space-between;}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;}
-  .brand img{width:30px;height:30px;border-radius:9px;display:block;}
-  .balance-label{font-size:12px;opacity:.8;margin-top:18px;}
-  .balance-val{font-size:32px;font-weight:800;margin-top:2px;letter-spacing:-0.5px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:400;font-size:23px;font-family:var(--font-fun);letter-spacing:.5px;}
+  .logout-btn{background:rgba(255,255,255,0.18);border:none;color:#fff;border-radius:999px;padding:6px 14px;font-size:11.5px;cursor:pointer;}
+  .greet{font-size:12px;opacity:.85;margin-top:2px;}
+  .balance-label{font-size:12px;opacity:.8;margin-top:16px;}
+  .balance-val{font-size:34px;font-weight:400;margin-top:4px;font-family:var(--font-fun);letter-spacing:.5px;}
 
   /* ---------- Section headers ---------- */
   .section{margin-top:26px;}
   .section-title{
-    font-size:15px;font-weight:700;color:var(--text);
+    font-size:19px;font-weight:400;color:var(--text);font-family:var(--font-fun);letter-spacing:.3px;
     display:flex;align-items:center;gap:8px;margin-bottom:12px;
   }
   .section-title .bar{width:4px;height:16px;border-radius:3px;background:var(--primary);display:inline-block;}
+  .section-title .bar.gold{background:var(--gold);}
 
   /* ---------- Wallets ---------- */
   .wallets-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 8px;}
@@ -76,7 +113,7 @@
   .wallet-card.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light);}
   .wallet-card .wi{font-size:18px;}
   .wallet-card .wn{font-size:12.5px;color:var(--text-dim);margin-top:6px;}
-  .wallet-card .wb{font-weight:800;font-size:15px;margin-top:2px;color:var(--income);}
+  .wallet-card .wb{font-weight:400;font-size:18px;margin-top:3px;color:var(--income);font-family:var(--font-fun);}
   .wallet-card .wb.neg{color:var(--expense);}
   .wallet-add-row{display:flex;gap:8px;margin-top:10px;}
   .wallet-add-row input{flex:1;}
@@ -86,11 +123,11 @@
   .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
   .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;text-align:center;}
   .stat .k{font-size:11px;color:var(--text-dim);}
-  .stat .v{font-size:16px;font-weight:800;margin-top:4px;}
+  .stat .v{font-size:19px;font-weight:400;margin-top:5px;font-family:var(--font-fun);}
   .stat.income .v{color:var(--income);}
   .stat.expense .v{color:var(--expense);}
   .stat.balance .v{color:var(--primary);}
-  @media (max-width:420px){ .stat .v{font-size:13.5px;} }
+  @media (max-width:420px){ .stat .v{font-size:15px;} }
 
   /* ---------- Filters ---------- */
   .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
@@ -111,22 +148,19 @@
   .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
   .form-grid .field.span2{grid-column:span 2;}
   .type-toggle{display:flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;padding:3px;background:var(--bg);}
-  .type-toggle button{flex:1;background:transparent;color:var(--text-dim);border:none;padding:8px 6px;cursor:pointer;font-size:12.5px;border-radius:999px;font-weight:600;}
+  .type-toggle button{flex:1;background:transparent;color:var(--text-dim);border:none;padding:8px 6px;cursor:pointer;font-size:14px;border-radius:999px;font-weight:400;font-family:var(--font-fun);}
   .type-toggle button.active[data-t="income"]{background:var(--income);color:#fff;}
   .type-toggle button.active[data-t="expense"]{background:var(--expense);color:#fff;}
   .type-toggle button.active[data-t="transfer"]{background:var(--purple);color:#fff;}
-  .primary-btn{background:var(--primary);color:#fff;border:none;font-weight:700;border-radius:999px;padding:11px 20px;cursor:pointer;width:100%;}
+  .primary-btn{background:var(--primary);color:#fff;border:none;font-weight:400;font-family:var(--font-fun);font-size:16px;letter-spacing:.3px;border-radius:999px;padding:11px 20px;cursor:pointer;width:100%;}
   .primary-btn:hover{background:var(--primary-dark);}
-  .ghost-btn{background:var(--primary-light);color:var(--primary-dark);border:none;font-weight:700;border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer;white-space:nowrap;}
-  .hidden{display:none !important;}
+  .ghost-btn{background:var(--primary-light);color:var(--primary-dark);border:none;font-weight:400;font-family:var(--font-fun);font-size:15px;letter-spacing:.3px;border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer;white-space:nowrap;}
 
   /* ---------- Chart ---------- */
   .chart-box{height:260px;}
 
   /* ---------- Transactions ---------- */
-  .tx-row{
-    display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);
-  }
+  .tx-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);}
   .tx-row:last-child{border-bottom:none;}
   .tx-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
   .tx-dot.income{background:var(--income);}
@@ -135,7 +169,7 @@
   .tx-main{flex:1;min-width:0;}
   .tx-desc{font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .tx-meta{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
-  .tx-amt{font-weight:800;font-size:14px;white-space:nowrap;}
+  .tx-amt{font-weight:400;font-size:17px;white-space:nowrap;font-family:var(--font-fun);}
   .tx-amt.income{color:var(--income);}
   .tx-amt.expense{color:var(--expense);}
   .tx-amt.transfer{color:var(--purple);}
@@ -145,15 +179,85 @@
 
   .cat-manage{display:flex;gap:8px;align-items:flex-end;margin-top:6px;}
   .footer-note{color:var(--text-dim);font-size:11px;text-align:center;margin-top:36px;}
+
+  /* ---------- Crypto ---------- */
+  .rate-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;}
+  .rate-row .field{flex:1;min-width:150px;}
+  .crypto-add-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .crypto-add-row select{flex:1;min-width:120px;}
+  .crypto-add-row input{width:100px;}
+  .crypto-total{
+    background:var(--purple-bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:12px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .crypto-total .k{font-size:12px;color:var(--text-dim);}
+  .crypto-total .v{font-family:var(--font-fun);font-size:20px;color:var(--purple);}
+  .crypto-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border);}
+  .crypto-row:last-child{border-bottom:none;}
+  .crypto-badge{
+    width:34px;height:34px;border-radius:50%;background:var(--purple-bg);color:var(--purple);
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;
+  }
+  .crypto-main{flex:1;min-width:0;}
+  .crypto-name{font-size:13.5px;font-weight:600;}
+  .crypto-meta{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+  .crypto-val{font-family:var(--font-fun);font-size:16px;color:var(--purple);white-space:nowrap;}
+  .price-status{font-size:11px;color:var(--text-dim);margin-bottom:10px;}
 </style>
 </head>
 <body>
+
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="logo-mark lg" style="margin:0 auto;">
+      <svg viewBox="0 0 100 74" xmlns="http://www.w3.org/2000/svg">
+        <rect x="12" y="18" width="76" height="52" rx="12" fill="#fff"/>
+        <rect x="63" y="4" width="26" height="20" rx="8" fill="#fff"/>
+        <circle cx="70" cy="46" r="10" fill="#FFD640"/>
+      </svg>
+    </div>
+
+    <div id="signupForm">
+      <div class="auth-title">ساخت حساب در جیب‌یار</div>
+      <div class="auth-sub">یه نام و رمز کوتاه انتخاب کن تا اطلاعات مالی‌ت روی همین دستگاه قفل بمونه.</div>
+      <div class="auth-field"><label>نام شما</label><input type="text" id="signupName" placeholder="مثلاً آتیلا"></div>
+      <div class="auth-field"><label>رمز عبور (۴ رقم، اختیاری)</label><input type="password" id="signupPin" maxlength="4" inputmode="numeric" placeholder="••••"></div>
+      <button class="auth-btn" id="signupBtn">ساخت حساب</button>
+      <div class="auth-error" id="signupError"></div>
+      <div class="auth-switch">قبلاً حساب ساختی؟ <a id="goLogin">ورود</a></div>
+    </div>
+
+    <div id="loginForm" class="hidden">
+      <div class="auth-title" id="loginGreeting">خوش اومدی</div>
+      <div class="auth-sub">برای ادامه رمزت رو وارد کن.</div>
+      <div class="auth-field hidden" id="loginPinWrap"><label>رمز عبور</label><input type="password" id="loginPin" maxlength="4" inputmode="numeric" placeholder="••••"></div>
+      <button class="auth-btn" id="loginBtn">ورود</button>
+      <div class="auth-error" id="loginError"></div>
+      <div class="auth-switch">حساب دیگه‌ای می‌خوای؟ <a id="goSignup">ساخت حساب جدید</a></div>
+    </div>
+
+    <div class="auth-note">این ورود فقط یه قفل ساده و محلیه — اطلاعات فقط روی همین مرورگر ذخیره می‌شه و با سرور یا حساب دیگه‌ای همگام نمی‌شه.</div>
+  </div>
+</div>
+
+<div id="appRoot" class="hidden">
 <div class="wrap">
 
   <div class="appbar">
     <div class="appbar-top">
-      <div class="brand"><img src="./icons/icon-192.png" alt=""> جیب‌یار</div>
+      <div class="brand">
+        <span class="logo-mark">
+          <svg viewBox="0 0 100 74" xmlns="http://www.w3.org/2000/svg">
+            <rect x="12" y="18" width="76" height="52" rx="12" fill="#fff"/>
+            <rect x="63" y="4" width="26" height="20" rx="8" fill="#fff"/>
+            <circle cx="70" cy="46" r="10" fill="#FFD640"/>
+          </svg>
+        </span>
+        جیب‌یار
+      </div>
+      <button class="logout-btn" id="logoutBtn">خروج</button>
     </div>
+    <div class="greet" id="greetLine"></div>
     <div class="balance-label">موجودی کل همه کیف‌پول‌ها</div>
     <div class="balance-val" id="totalBalance">۰ تومان</div>
   </div>
@@ -226,40 +330,171 @@
     <div id="txList"></div>
   </div>
 
-  <div class="footer-note">اطلاعات شما فقط برای شما ذخیره می‌شود و روی این دستگاه/حساب باقی می‌ماند.</div>
+  <div class="section card">
+    <div class="section-title"><span class="bar gold"></span>ارز دیجیتال</div>
+    <div class="rate-row">
+      <div class="field"><label>نرخ دلار به تومان (خودت وارد کن)</label><input type="number" id="usdRateInput" placeholder="مثلاً ۶۰۰۰۰۰"></div>
+      <button class="ghost-btn" id="refreshPricesBtn" type="button">🔄 به‌روزرسانی قیمت‌ها</button>
+    </div>
+    <div class="price-status" id="priceStatus">قیمت‌ها هنوز به‌روزرسانی نشده‌اند.</div>
+    <div class="crypto-add-row">
+      <select id="cryptoSelect"></select>
+      <input type="number" id="cryptoAmount" placeholder="مقدار" min="0" step="any">
+      <button class="ghost-btn" id="addCryptoBtn" type="button">+ افزودن</button>
+    </div>
+    <div class="crypto-total">
+      <div class="k">ارزش کل دارایی دیجیتال</div>
+      <div class="v" id="cryptoTotalVal">۰ تومان</div>
+    </div>
+    <div id="cryptoList"></div>
+  </div>
+
+  <div class="footer-note">اطلاعات شما فقط روی همین مرورگر ذخیره می‌شود.</div>
+</div>
 </div>
 
 <script>
+/* ================= Jalali date helpers (self-contained, no external lib) ================= */
+function toJalali(gy, gm, gd){
+  var g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
+  var jy = (gy<=1600)?0:979;
+  gy -= (gy<=1600)?621:1600;
+  var gy2 = (gm>2)?(gy+1):gy;
+  var days = (365*gy) + parseInt((gy2+3)/4) - parseInt((gy2+99)/100) + parseInt((gy2+399)/400) - 80 + gd + g_d_m[gm-1];
+  jy += 33*parseInt(days/12053);
+  days %= 12053;
+  jy += 4*parseInt(days/1461);
+  days %= 1461;
+  if(days > 365){ jy += parseInt((days-1)/365); days = (days-1)%365; }
+  var jm = (days < 186) ? 1+parseInt(days/31) : 7+parseInt((days-186)/30);
+  var jd = 1 + ((days < 186) ? (days%31) : ((days-186)%30));
+  return [jy, jm, jd];
+}
+const JALALI_MONTHS = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+function toFaDigits(input){
+  const map = {'0':'۰','1':'۱','2':'۲','3':'۳','4':'۴','5':'۵','6':'۶','7':'۷','8':'۸','9':'۹'};
+  return String(input).replace(/[0-9]/g, d => map[d]);
+}
+function formatJalali(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const [jy, jm, jd] = toJalali(d.getFullYear(), d.getMonth()+1, d.getDate());
+  return toFaDigits(jd) + ' ' + JALALI_MONTHS[jm-1] + ' ' + toFaDigits(jy);
+}
+function jalaliMonthLabel(gy, gm){
+  // label a Gregorian year-month pair using the Jalali month of its 1st day
+  const [jy, jm] = toJalali(gy, gm, 1);
+  return JALALI_MONTHS[jm-1] + ' ' + toFaDigits(jy);
+}
+
+/* ================= Auth (local-only gate) ================= */
+function getAccount(){ try{ const a = localStorage.getItem('jibyar_account'); return a ? JSON.parse(a) : null; }catch(e){ return null; } }
+function saveAccount(acc){ localStorage.setItem('jibyar_account', JSON.stringify(acc)); }
+
+function showApp(){
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('appRoot').classList.remove('hidden');
+  const acc = getAccount();
+  document.getElementById('greetLine').textContent = acc && acc.name ? ('سلام ' + acc.name + '، خوش برگشتی') : '';
+  bootApp();
+}
+
+function initAuthScreen(){
+  const acc = getAccount();
+  const unlocked = sessionStorage.getItem('jibyar_unlocked') === '1';
+  if(acc && unlocked){ showApp(); return; }
+
+  const signupForm = document.getElementById('signupForm');
+  const loginForm = document.getElementById('loginForm');
+
+  if(acc){
+    signupForm.classList.add('hidden');
+    loginForm.classList.remove('hidden');
+    document.getElementById('loginGreeting').textContent = 'سلام ' + acc.name;
+    document.getElementById('loginPinWrap').classList.toggle('hidden', !acc.pin);
+  } else {
+    signupForm.classList.remove('hidden');
+    loginForm.classList.add('hidden');
+  }
+
+  document.getElementById('goLogin').addEventListener('click', ()=>{
+    signupForm.classList.add('hidden'); loginForm.classList.remove('hidden');
+  });
+  document.getElementById('goSignup').addEventListener('click', ()=>{
+    loginForm.classList.add('hidden'); signupForm.classList.remove('hidden');
+  });
+
+  document.getElementById('signupBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('signupName').value.trim();
+    const pin = document.getElementById('signupPin').value.trim();
+    const err = document.getElementById('signupError');
+    if(!name){ err.textContent = 'لطفاً نامت رو وارد کن.'; return; }
+    if(pin && !/^\d{4}$/.test(pin)){ err.textContent = 'رمز باید ۴ رقم باشه یا خالی بذارش.'; return; }
+    saveAccount({name, pin});
+    sessionStorage.setItem('jibyar_unlocked','1');
+    showApp();
+  });
+
+  document.getElementById('loginBtn').addEventListener('click', ()=>{
+    const current = getAccount();
+    const err = document.getElementById('loginError');
+    if(current.pin){
+      const pin = document.getElementById('loginPin').value.trim();
+      if(pin !== current.pin){ err.textContent = 'رمز اشتباهه، دوباره امتحان کن.'; return; }
+    }
+    sessionStorage.setItem('jibyar_unlocked','1');
+    showApp();
+  });
+}
+
+
 const DEFAULT_CATS = {
   income: ["حقوق","فروش","هدیه","سرمایه‌گذاری","سایر درآمد"],
   expense: ["خوراک","حمل‌ونقل","مسکن","قبوض","خرید","سرگرمی","درمان","سایر هزینه"]
 };
 const WALLET_ICONS = ["👛","🏦","💳","💰","🪙","👝"];
+const CRYPTO_OPTIONS = [
+  {id:'bitcoin', symbol:'BTC', name:'بیت‌کوین'},
+  {id:'ethereum', symbol:'ETH', name:'اتریوم'},
+  {id:'tether', symbol:'USDT', name:'تتر'},
+  {id:'binancecoin', symbol:'BNB', name:'بایننس‌کوین'},
+  {id:'ripple', symbol:'XRP', name:'ریپل'},
+  {id:'solana', symbol:'SOL', name:'سولانا'},
+  {id:'dogecoin', symbol:'DOGE', name:'دوج‌کوین'},
+  {id:'tron', symbol:'TRX', name:'ترون'}
+];
 
-let state = { wallets: [], transactions: [], transfers: [], categories: JSON.parse(JSON.stringify(DEFAULT_CATS)) };
+let state = { wallets: [], transactions: [], transfers: [], categories: JSON.parse(JSON.stringify(DEFAULT_CATS)), crypto: [] };
 let currentType = "income";
 let activeWalletFilter = "all";
 let chartInstance = null;
+let cryptoPrices = {}; // {coinId: usdPrice}
+let appBooted = false;
 
 function faNum(n){ return Math.round(n).toLocaleString('fa-IR'); }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function uid(){ return Date.now() + '-' + Math.random().toString(36).slice(2,7); }
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
-async function loadState(){
-  try{ const w = await window.storage.get('wallets', false); if(w && w.value) state.wallets = JSON.parse(w.value); }catch(e){}
-  try{ const tx = await window.storage.get('transactions', false); if(tx && tx.value) state.transactions = JSON.parse(tx.value); }catch(e){}
-  try{ const tr = await window.storage.get('transfers', false); if(tr && tr.value) state.transfers = JSON.parse(tr.value); }catch(e){}
-  try{ const cats = await window.storage.get('categories', false); if(cats && cats.value) state.categories = JSON.parse(cats.value); }catch(e){}
+function loadState(){
+  try{ const w = localStorage.getItem('jibyar_wallets'); if(w) state.wallets = JSON.parse(w); }catch(e){}
+  try{ const tx = localStorage.getItem('jibyar_transactions'); if(tx) state.transactions = JSON.parse(tx); }catch(e){}
+  try{ const tr = localStorage.getItem('jibyar_transfers'); if(tr) state.transfers = JSON.parse(tr); }catch(e){}
+  try{ const cats = localStorage.getItem('jibyar_categories'); if(cats) state.categories = JSON.parse(cats); }catch(e){}
+  try{ const cr = localStorage.getItem('jibyar_crypto'); if(cr) state.crypto = JSON.parse(cr); }catch(e){}
+  try{ const cp = localStorage.getItem('jibyar_crypto_prices'); if(cp) cryptoPrices = JSON.parse(cp); }catch(e){}
   if(state.wallets.length === 0){
     state.wallets = [ {id:uid(), name:"نقدی", icon:"👛"}, {id:uid(), name:"حساب بانکی", icon:"🏦"} ];
-    await saveWallets();
+    saveWallets();
   }
 }
-async function saveWallets(){ try{ await window.storage.set('wallets', JSON.stringify(state.wallets), false);}catch(e){} }
-async function saveTransactions(){ try{ await window.storage.set('transactions', JSON.stringify(state.transactions), false);}catch(e){} }
-async function saveTransfers(){ try{ await window.storage.set('transfers', JSON.stringify(state.transfers), false);}catch(e){} }
-async function saveCategories(){ try{ await window.storage.set('categories', JSON.stringify(state.categories), false);}catch(e){} }
+function saveWallets(){ try{ localStorage.setItem('jibyar_wallets', JSON.stringify(state.wallets)); }catch(e){} }
+function saveTransactions(){ try{ localStorage.setItem('jibyar_transactions', JSON.stringify(state.transactions)); }catch(e){} }
+function saveTransfers(){ try{ localStorage.setItem('jibyar_transfers', JSON.stringify(state.transfers)); }catch(e){} }
+function saveCategories(){ try{ localStorage.setItem('jibyar_categories', JSON.stringify(state.categories)); }catch(e){} }
+function saveCrypto(){ try{ localStorage.setItem('jibyar_crypto', JSON.stringify(state.crypto)); }catch(e){} }
+function saveCryptoPrices(){ try{ localStorage.setItem('jibyar_crypto_prices', JSON.stringify(cryptoPrices)); }catch(e){} }
+function saveUsdRate(v){ try{ localStorage.setItem('jibyar_usd_rate', String(v)); }catch(e){} }
+function loadUsdRate(){ try{ return localStorage.getItem('jibyar_usd_rate') || ''; }catch(e){ return ''; } }
 
 function walletBalance(walletId){
   let bal = 0;
@@ -377,7 +612,7 @@ function renderList(filteredTx, filteredTransfers){
   rows.sort((a,b)=> b.data.date.localeCompare(a.data.date));
   rows.forEach(r=>{
     const t = r.data;
-    const dateFa = new Date(t.date).toLocaleDateString('fa-IR');
+    const dateFa = formatJalali(t.date);
     const row = document.createElement('div');
     row.className = 'tx-row';
     if(r.kind==='tx'){
@@ -404,26 +639,24 @@ function renderList(filteredTx, filteredTransfers){
     listEl.appendChild(row);
   });
   listEl.querySelectorAll('.del-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
+    btn.addEventListener('click', ()=>{
       const id = btn.dataset.id;
-      if(btn.dataset.kind === 'tx'){ state.transactions = state.transactions.filter(t=> String(t.id)!==String(id)); await saveTransactions(); }
-      else { state.transfers = state.transfers.filter(t=> String(t.id)!==String(id)); await saveTransfers(); }
+      if(btn.dataset.kind === 'tx'){ state.transactions = state.transactions.filter(t=> String(t.id)!==String(id)); saveTransactions(); }
+      else { state.transfers = state.transfers.filter(t=> String(t.id)!==String(id)); saveTransfers(); }
       renderAll();
     });
   });
 }
 
-function monthKey(dateStr){ const d=new Date(dateStr); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
-function monthLabelFa(key){ const [y,m]=key.split('-'); return new Date(Number(y),Number(m)-1,1).toLocaleDateString('fa-IR',{year:'numeric',month:'long'}); }
-
 function renderChart(){
   const months=[]; const now=new Date();
-  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); months.push({y:d.getFullYear(), m:d.getMonth()+1}); }
   const wf = document.getElementById('filterWallet').value;
   const txForChart = wf==='all' ? state.transactions : state.transactions.filter(t=>t.walletId===wf);
-  const incomeData = months.map(mk => txForChart.filter(t=>t.type==='income' && monthKey(t.date)===mk).reduce((s,t)=>s+Number(t.amount),0));
-  const expenseData = months.map(mk => txForChart.filter(t=>t.type==='expense' && monthKey(t.date)===mk).reduce((s,t)=>s+Number(t.amount),0));
-  const labels = months.map(monthLabelFa);
+  const mk = (t)=>{ const d=new Date(t.date); return d.getFullYear()+'-'+(d.getMonth()+1); };
+  const incomeData = months.map(({y,m}) => txForChart.filter(t=>t.type==='income' && mk(t)===(y+'-'+m)).reduce((s,t)=>s+Number(t.amount),0));
+  const expenseData = months.map(({y,m}) => txForChart.filter(t=>t.type==='expense' && mk(t)===(y+'-'+m)).reduce((s,t)=>s+Number(t.amount),0));
+  const labels = months.map(({y,m}) => jalaliMonthLabel(y,m));
   const ctx = document.getElementById('monthlyChart').getContext('2d');
   if(chartInstance) chartInstance.destroy();
   chartInstance = new Chart(ctx, {
@@ -443,6 +676,86 @@ function renderChart(){
   });
 }
 
+/* ---------- Crypto ---------- */
+function populateCryptoSelect(){
+  const sel = document.getElementById('cryptoSelect');
+  sel.innerHTML = '';
+  CRYPTO_OPTIONS.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = c.name + ' (' + c.symbol + ')';
+    sel.appendChild(opt);
+  });
+}
+function getUsdRate(){ return Number(document.getElementById('usdRateInput').value) || 0; }
+
+function renderCrypto(){
+  const listEl = document.getElementById('cryptoList');
+  listEl.innerHTML = '';
+  const rate = getUsdRate();
+  let totalToman = 0;
+  if(state.crypto.length === 0){
+    listEl.innerHTML = '<div class="empty">هنوز دارایی دیجیتالی اضافه نکردی.</div>';
+  } else {
+    state.crypto.forEach(h=>{
+      const meta = CRYPTO_OPTIONS.find(c=>c.id===h.coinId) || {symbol:h.coinId, name:h.coinId};
+      const price = cryptoPrices[h.coinId];
+      const usdVal = price ? price * Number(h.amount) : null;
+      const tomanVal = (usdVal!==null && rate>0) ? usdVal * rate : null;
+      if(tomanVal) totalToman += tomanVal;
+      const row = document.createElement('div');
+      row.className = 'crypto-row';
+      row.innerHTML = `
+        <div class="crypto-badge">${escapeHtml(meta.symbol)}</div>
+        <div class="crypto-main">
+          <div class="crypto-name">${escapeHtml(meta.name)}</div>
+          <div class="crypto-meta">${toFaDigits(h.amount)} ${escapeHtml(meta.symbol)}${price? ' · قیمت: $' + toFaDigits(price.toLocaleString('en-US')) : ' · قیمت نامشخص'}</div>
+        </div>
+        <div class="crypto-val">${tomanVal!==null ? faNum(tomanVal)+' ت' : (usdVal!==null? '$'+toFaDigits(usdVal.toFixed(2)) : '—')}</div>
+        <button class="del-btn" data-id="${h.id}" aria-label="حذف">✕</button>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+  document.getElementById('cryptoTotalVal').textContent = totalToman>0 ? (faNum(totalToman) + ' تومان') : (rate>0 ? '۰ تومان' : 'نرخ دلار را وارد کنید');
+  listEl.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      state.crypto = state.crypto.filter(h=> String(h.id) !== String(btn.dataset.id));
+      saveCrypto();
+      renderCrypto();
+    });
+  });
+}
+
+async function refreshCryptoPrices(){
+  const ids = [...new Set(state.crypto.map(h=>h.coinId))];
+  const statusEl = document.getElementById('priceStatus');
+  if(ids.length === 0){ statusEl.textContent = 'اول یه دارایی دیجیتال اضافه کن.'; return; }
+  statusEl.textContent = 'در حال دریافت قیمت‌ها...';
+  try{
+    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    ids.forEach(id=>{ if(data[id] && typeof data[id].usd === 'number') cryptoPrices[id] = data[id].usd; });
+    saveCryptoPrices();
+    const now = new Date();
+    statusEl.textContent = 'آخرین به‌روزرسانی: ' + formatJalali(now.toISOString().slice(0,10)) + ' — ساعت ' + toFaDigits(now.toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'}));
+  }catch(e){
+    statusEl.textContent = 'به‌روزرسانی قیمت‌ها ناموفق بود (اتصال اینترنت یا دسترسی به API را بررسی کن). قیمت‌های قبلی نمایش داده می‌شوند.';
+  }
+  renderCrypto();
+}
+
+async function addCrypto(){
+  const coinId = document.getElementById('cryptoSelect').value;
+  const amount = Number(document.getElementById('cryptoAmount').value);
+  if(!amount || amount<=0) return;
+  state.crypto.push({id:uid(), coinId, amount});
+  saveCrypto();
+  document.getElementById('cryptoAmount').value = '';
+  renderCrypto();
+  refreshCryptoPrices();
+}
+
 function renderAll(){
   renderWallets();
   const filteredTx = getFilteredTx();
@@ -450,9 +763,10 @@ function renderAll(){
   renderCards(filteredTx);
   renderList(filteredTx, filteredTransfers);
   renderChart();
+  renderCrypto();
 }
 
-async function addTransaction(){
+function addTransaction(){
   const amount = Number(document.getElementById('amountInput').value);
   const date = document.getElementById('dateInput').value || todayISO();
   if(!amount || amount<=0){ document.getElementById('amountInput').focus(); return; }
@@ -462,40 +776,40 @@ async function addTransaction(){
     if(!fromWalletId || !toWalletId || fromWalletId===toWalletId){ document.getElementById('toWalletInput').focus(); return; }
     const desc = document.getElementById('transferDescInput').value.trim();
     state.transfers.push({id:uid(), fromWalletId, toWalletId, amount, date, desc});
-    await saveTransfers();
+    saveTransfers();
     document.getElementById('transferDescInput').value = '';
   } else {
     const walletId = document.getElementById('walletInput').value;
     const category = document.getElementById('catInput').value;
     const desc = document.getElementById('descInput').value.trim();
     state.transactions.push({id:uid(), type:currentType, walletId, amount, date, category, desc});
-    await saveTransactions();
+    saveTransactions();
     document.getElementById('descInput').value = '';
   }
   document.getElementById('amountInput').value = '';
   renderAll();
 }
 
-async function addCategory(){
+function addCategory(){
   const input = document.getElementById('newCatInput');
   const name = input.value.trim();
   if(!name) return;
   if(!state.categories[currentType].includes(name)){
     state.categories[currentType].push(name);
-    await saveCategories();
+    saveCategories();
     populateCatSelect();
     document.getElementById('catInput').value = name;
   }
   input.value = '';
 }
 
-async function addWallet(){
+function addWallet(){
   const input = document.getElementById('newWalletName');
   const name = input.value.trim();
   if(!name) return;
   const icon = WALLET_ICONS[state.wallets.length % WALLET_ICONS.length];
   state.wallets.push({id:uid(), name, icon});
-  await saveWallets();
+  saveWallets();
   input.value = '';
   renderAll();
 }
@@ -509,15 +823,31 @@ function initListeners(){
   document.getElementById('toDate').addEventListener('change', renderAll);
   document.getElementById('filterWallet').addEventListener('change', ()=>{ activeWalletFilter = document.getElementById('filterWallet').value; renderAll(); });
   document.querySelectorAll('.qbtn[data-range]').forEach(b=> b.addEventListener('click', ()=> applyQuickRange(b.dataset.range)));
+  document.getElementById('addCryptoBtn').addEventListener('click', addCrypto);
+  document.getElementById('refreshPricesBtn').addEventListener('click', refreshCryptoPrices);
+  document.getElementById('usdRateInput').addEventListener('change', ()=>{ saveUsdRate(getUsdRate()); renderCrypto(); });
+  document.getElementById('logoutBtn').addEventListener('click', ()=>{
+    sessionStorage.removeItem('jibyar_unlocked');
+    document.getElementById('appRoot').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+    initAuthScreen();
+  });
 }
 
-(async function init(){
-  await loadState();
+function bootApp(){
+  if(appBooted) return;
+  appBooted = true;
+  loadState();
   document.getElementById('dateInput').value = todayISO();
+  document.getElementById('usdRateInput').value = loadUsdRate();
+  populateCryptoSelect();
   setType('income');
   initListeners();
   applyQuickRange('all');
-})();
+  renderCrypto();
+}
+
+initAuthScreen();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
