@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>جیب‌یار — دستیار مالی شخصی</title>
+<meta name="theme-color" content="#2F6FED">
+<meta name="description" content="مدیریت درآمد، هزینه، کیف‌پول‌ها و گزارش‌های مالی شخصی">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Lalezar&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#F3F6FC;
+    --card:#FFFFFF;
+    --primary:#2F6FED;
+    --primary-dark:#1E4FCC;
+    --primary-light:#EAF0FE;
+    --income:#17A673;
+    --income-bg:#E6F7F0;
+    --expense:#E5484D;
+    --expense-bg:#FDECEC;
+    --purple:#7C6FE0;
+    --purple-bg:#EFECFC;
+    --text:#16213A;
+    --text-dim:#7284A0;
+    --border:#E7ECF6;
+    --radius:18px;
+    --radius-sm:12px;
+    --shadow:0 6px 24px rgba(47,111,237,0.10);
+    --font-fun:'Lalezar', cursive;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Vazirmatn',sans-serif;
+    min-height:100vh;
+    padding-bottom:50px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px;}
+
+  /* ---------- App bar ---------- */
+  .appbar{
+    background:linear-gradient(160deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius:0 0 28px 28px;
+    padding:22px 20px 26px;
+    color:#fff;
+    margin-bottom:20px;
+    box-shadow:var(--shadow);
+  }
+  .appbar-top{display:flex;align-items:center;justify-content:space-between;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:400;font-size:23px;font-family:var(--font-fun);letter-spacing:.5px;}
+  .brand img{width:30px;height:30px;border-radius:9px;display:block;}
+  .balance-label{font-size:12px;opacity:.8;margin-top:18px;}
+  .balance-val{font-size:34px;font-weight:400;margin-top:4px;font-family:var(--font-fun);letter-spacing:.5px;}
+
+  /* ---------- Section headers ---------- */
+  .section{margin-top:26px;}
+  .section-title{
+    font-size:19px;font-weight:400;color:var(--text);font-family:var(--font-fun);letter-spacing:.3px;
+    display:flex;align-items:center;gap:8px;margin-bottom:12px;
+  }
+  .section-title .bar{width:4px;height:16px;border-radius:3px;background:var(--primary);display:inline-block;}
+
+  /* ---------- Wallets ---------- */
+  .wallets-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 8px;}
+  .wallet-card{
+    min-width:128px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:12px 14px;cursor:pointer;flex-shrink:0;transition:box-shadow .15s, border-color .15s;
+  }
+  .wallet-card.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light);}
+  .wallet-card .wi{font-size:18px;}
+  .wallet-card .wn{font-size:12.5px;color:var(--text-dim);margin-top:6px;}
+  .wallet-card .wb{font-weight:400;font-size:18px;margin-top:3px;color:var(--income);font-family:var(--font-fun);}
+  .wallet-card .wb.neg{color:var(--expense);}
+  .wallet-add-row{display:flex;gap:8px;margin-top:10px;}
+  .wallet-add-row input{flex:1;}
+
+  /* ---------- Cards ---------- */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+  .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;text-align:center;}
+  .stat .k{font-size:11px;color:var(--text-dim);}
+  .stat .v{font-size:19px;font-weight:400;margin-top:5px;font-family:var(--font-fun);}
+  .stat.income .v{color:var(--income);}
+  .stat.expense .v{color:var(--expense);}
+  .stat.balance .v{color:var(--primary);}
+  @media (max-width:420px){ .stat .v{font-size:13.5px;} }
+
+  /* ---------- Filters ---------- */
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:11px;color:var(--text-dim);}
+  input,select,button,textarea{font-family:'Vazirmatn',sans-serif;font-size:13.5px;}
+  input,select,textarea{
+    background:var(--bg);border:1px solid var(--border);color:var(--text);
+    border-radius:var(--radius-sm);padding:9px 11px;outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--primary);}
+  .quick-btns{display:flex;gap:6px;flex-wrap:wrap;}
+  .qbtn{background:var(--card);border:1px solid var(--border);color:var(--text-dim);border-radius:999px;padding:8px 14px;cursor:pointer;}
+  .qbtn:hover,.qbtn.active{border-color:var(--primary);color:var(--primary);background:var(--primary-light);}
+  .qbtn:focus-visible,.primary-btn:focus-visible,button:focus-visible{outline:2px solid var(--primary-dark);outline-offset:2px;}
+
+  /* ---------- Form ---------- */
+  .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .form-grid .field.span2{grid-column:span 2;}
+  .type-toggle{display:flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;padding:3px;background:var(--bg);}
+  .type-toggle button{flex:1;background:transparent;color:var(--text-dim);border:none;padding:8px 6px;cursor:pointer;font-size:14px;border-radius:999px;font-weight:400;font-family:var(--font-fun);}
+  .type-toggle button.active[data-t="income"]{background:var(--income);color:#fff;}
+  .type-toggle button.active[data-t="expense"]{background:var(--expense);color:#fff;}
+  .type-toggle button.active[data-t="transfer"]{background:var(--purple);color:#fff;}
+  .primary-btn{background:var(--primary);color:#fff;border:none;font-weight:400;font-family:var(--font-fun);font-size:16px;letter-spacing:.3px;border-radius:999px;padding:11px 20px;cursor:pointer;width:100%;}
+  .primary-btn:hover{background:var(--primary-dark);}
+  .ghost-btn{background:var(--primary-light);color:var(--primary-dark);border:none;font-weight:400;font-family:var(--font-fun);font-size:15px;letter-spacing:.3px;border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer;white-space:nowrap;}
+  .hidden{display:none !important;}
+
+  /* ---------- Chart ---------- */
+  .chart-box{height:260px;}
+
+  /* ---------- Transactions ---------- */
+  .tx-row{
+    display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);
+  }
+  .tx-row:last-child{border-bottom:none;}
+  .tx-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .tx-dot.income{background:var(--income);}
+  .tx-dot.expense{background:var(--expense);}
+  .tx-dot.transfer{background:var(--purple);}
+  .tx-main{flex:1;min-width:0;}
+  .tx-desc{font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tx-meta{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+  .tx-amt{font-weight:400;font-size:17px;white-space:nowrap;font-family:var(--font-fun);}
+  .tx-amt.income{color:var(--income);}
+  .tx-amt.expense{color:var(--expense);}
+  .tx-amt.transfer{color:var(--purple);}
+  .del-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;width:26px;height:26px;border-radius:8px;flex-shrink:0;}
+  .del-btn:hover{color:var(--expense);background:var(--expense-bg);}
+  .empty{color:var(--text-dim);font-size:13px;padding:24px 6px;text-align:center;}
+
+  .cat-manage{display:flex;gap:8px;align-items:flex-end;margin-top:6px;}
+  .footer-note{color:var(--text-dim);font-size:11px;text-align:center;margin-top:36px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="appbar">
+    <div class="appbar-top">
+      <div class="brand"><img src="./icons/icon-192.png" alt=""> جیب‌یار</div>
+    </div>
+    <div class="balance-label">موجودی کل همه کیف‌پول‌ها</div>
+    <div class="balance-val" id="totalBalance">۰ تومان</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="bar"></span>کیف‌پول‌ها</div>
+    <div class="wallets-strip" id="walletsStrip"></div>
+    <div class="wallet-add-row">
+      <input type="text" id="newWalletName" placeholder="نام کیف‌پول جدید">
+      <button class="ghost-btn" id="addWalletBtn" type="button">+ افزودن</button>
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="section-title"><span class="bar"></span>فیلتر</div>
+    <div class="filters">
+      <div class="field"><label>از تاریخ</label><input type="date" id="fromDate"></div>
+      <div class="field"><label>تا تاریخ</label><input type="date" id="toDate"></div>
+      <div class="field"><label>کیف‌پول</label><select id="filterWallet"><option value="all">همه</option></select></div>
+      <div class="quick-btns">
+        <button class="qbtn" data-range="thisMonth">این ماه</button>
+        <button class="qbtn" data-range="lastMonth">ماه قبل</button>
+        <button class="qbtn" data-range="all">همه</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section cards-grid">
+    <div class="stat income"><div class="k">درآمد بازه</div><div class="v" id="sumIncome">۰</div></div>
+    <div class="stat expense"><div class="k">هزینه بازه</div><div class="v" id="sumExpense">۰</div></div>
+    <div class="stat balance"><div class="k">تراز بازه</div><div class="v" id="sumNet">۰</div></div>
+  </div>
+
+  <div class="section card">
+    <div class="section-title"><span class="bar"></span>ثبت تراکنش جدید</div>
+    <div class="form-grid">
+      <div class="field span2">
+        <div class="type-toggle">
+          <button type="button" data-t="income" class="active">درآمد</button>
+          <button type="button" data-t="expense">هزینه</button>
+          <button type="button" data-t="transfer">انتقال</button>
+        </div>
+      </div>
+      <div class="field"><label>مبلغ (تومان)</label><input type="number" id="amountInput" placeholder="۵۰۰۰۰۰" min="0"></div>
+      <div class="field"><label>تاریخ</label><input type="date" id="dateInput"></div>
+
+      <div class="field io-field"><label>کیف‌پول</label><select id="walletInput"></select></div>
+      <div class="field io-field"><label>دسته‌بندی</label><select id="catInput"></select></div>
+      <div class="field span2 io-field"><label>توضیح (اختیاری)</label><input type="text" id="descInput" placeholder="مثلاً خرید هفتگی"></div>
+
+      <div class="field transfer-field hidden"><label>از کیف‌پول</label><select id="fromWalletInput"></select></div>
+      <div class="field transfer-field hidden"><label>به کیف‌پول</label><select id="toWalletInput"></select></div>
+      <div class="field span2 transfer-field hidden"><label>توضیح (اختیاری)</label><input type="text" id="transferDescInput" placeholder="مثلاً برداشت از بانک"></div>
+
+      <div class="field span2"><button class="primary-btn" id="addTxBtn">ثبت تراکنش</button></div>
+      <div class="field span2 cat-manage io-field">
+        <input type="text" id="newCatInput" placeholder="دسته‌بندی جدید" style="flex:1">
+        <button class="ghost-btn" id="addCatBtn" type="button">افزودن</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="section-title"><span class="bar"></span>روند ماهانه</div>
+    <div class="chart-box"><canvas id="monthlyChart"></canvas></div>
+  </div>
+
+  <div class="section card">
+    <div class="section-title"><span class="bar"></span>تراکنش‌ها</div>
+    <div id="txList"></div>
+  </div>
+
+  <div class="footer-note">اطلاعات شما فقط برای شما ذخیره می‌شود و روی این دستگاه/حساب باقی می‌ماند.</div>
+</div>
+
+<script>
+const DEFAULT_CATS = {
+  income: ["حقوق","فروش","هدیه","سرمایه‌گذاری","سایر درآمد"],
+  expense: ["خوراک","حمل‌ونقل","مسکن","قبوض","خرید","سرگرمی","درمان","سایر هزینه"]
+};
+const WALLET_ICONS = ["👛","🏦","💳","💰","🪙","👝"];
+
+let state = { wallets: [], transactions: [], transfers: [], categories: JSON.parse(JSON.stringify(DEFAULT_CATS)) };
+let currentType = "income";
+let activeWalletFilter = "all";
+let chartInstance = null;
+
+function faNum(n){ return Math.round(n).toLocaleString('fa-IR'); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function uid(){ return Date.now() + '-' + Math.random().toString(36).slice(2,7); }
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+async function loadState(){
+  try{ const w = localStorage.getItem('jibyar_wallets'); if(w) state.wallets = JSON.parse(w); }catch(e){}
+  try{ const tx = localStorage.getItem('jibyar_transactions'); if(tx) state.transactions = JSON.parse(tx); }catch(e){}
+  try{ const tr = localStorage.getItem('jibyar_transfers'); if(tr) state.transfers = JSON.parse(tr); }catch(e){}
+  try{ const cats = localStorage.getItem('jibyar_categories'); if(cats) state.categories = JSON.parse(cats); }catch(e){}
+  if(state.wallets.length === 0){
+    state.wallets = [ {id:uid(), name:"نقدی", icon:"👛"}, {id:uid(), name:"حساب بانکی", icon:"🏦"} ];
+    await saveWallets();
+  }
+}
+async function saveWallets(){ try{ localStorage.setItem('jibyar_wallets', JSON.stringify(state.wallets)); }catch(e){} }
+async function saveTransactions(){ try{ localStorage.setItem('jibyar_transactions', JSON.stringify(state.transactions)); }catch(e){} }
+async function saveTransfers(){ try{ localStorage.setItem('jibyar_transfers', JSON.stringify(state.transfers)); }catch(e){} }
+async function saveCategories(){ try{ localStorage.setItem('jibyar_categories', JSON.stringify(state.categories)); }catch(e){} }
+
+function walletBalance(walletId){
+  let bal = 0;
+  state.transactions.forEach(t=>{ if(t.walletId===walletId) bal += t.type==='income'?Number(t.amount):-Number(t.amount); });
+  state.transfers.forEach(t=>{
+    if(t.fromWalletId===walletId) bal -= Number(t.amount);
+    if(t.toWalletId===walletId) bal += Number(t.amount);
+  });
+  return bal;
+}
+function totalBalance(){ return state.wallets.reduce((s,w)=> s + walletBalance(w.id), 0); }
+function walletName(id){ const w = state.wallets.find(x=>x.id===id); return w ? w.name : '—'; }
+
+function renderWallets(){
+  const strip = document.getElementById('walletsStrip');
+  strip.innerHTML = '';
+  state.wallets.forEach(w=>{
+    const bal = walletBalance(w.id);
+    const card = document.createElement('div');
+    card.className = 'wallet-card' + (activeWalletFilter === w.id ? ' active' : '');
+    card.innerHTML = `<div class="wi">${w.icon}</div><div class="wn">${escapeHtml(w.name)}</div><div class="wb ${bal<0?'neg':''}">${bal<0?'−':''}${faNum(Math.abs(bal))} ت</div>`;
+    card.addEventListener('click', ()=>{
+      activeWalletFilter = (activeWalletFilter === w.id) ? 'all' : w.id;
+      document.getElementById('filterWallet').value = activeWalletFilter;
+      renderAll();
+    });
+    strip.appendChild(card);
+  });
+  const fillSelect = (sel, includeAll)=>{
+    const prev = sel.value;
+    sel.innerHTML = includeAll ? '<option value="all">همه</option>' : '';
+    state.wallets.forEach(w=>{
+      const opt = document.createElement('option');
+      opt.value = w.id; opt.textContent = w.icon + ' ' + w.name;
+      sel.appendChild(opt);
+    });
+    if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
+  };
+  fillSelect(document.getElementById('filterWallet'), true);
+  fillSelect(document.getElementById('walletInput'), false);
+  fillSelect(document.getElementById('fromWalletInput'), false);
+  fillSelect(document.getElementById('toWalletInput'), false);
+}
+
+function populateCatSelect(){
+  const sel = document.getElementById('catInput');
+  sel.innerHTML = '';
+  state.categories[currentType].forEach(c=>{
+    const opt = document.createElement('option'); opt.value = c; opt.textContent = c; sel.appendChild(opt);
+  });
+}
+
+function setType(t){
+  currentType = t;
+  document.querySelectorAll('.type-toggle button').forEach(b=> b.classList.toggle('active', b.dataset.t === t));
+  const isTransfer = t === 'transfer';
+  document.querySelectorAll('.io-field').forEach(el=> el.classList.toggle('hidden', isTransfer));
+  document.querySelectorAll('.transfer-field').forEach(el=> el.classList.toggle('hidden', !isTransfer));
+  if(!isTransfer) populateCatSelect();
+}
+
+function getDateRange(){ return { from: document.getElementById('fromDate').value, to: document.getElementById('toDate').value }; }
+function inRange(dateStr, from, to){ if(from && dateStr < from) return false; if(to && dateStr > to) return false; return true; }
+
+function applyQuickRange(kind){
+  document.querySelectorAll('.qbtn[data-range]').forEach(b=> b.classList.toggle('active', b.dataset.range===kind));
+  const now = new Date();
+  const fromEl = document.getElementById('fromDate'), toEl = document.getElementById('toDate');
+  if(kind === 'all'){ fromEl.value=''; toEl.value=''; }
+  else if(kind === 'thisMonth'){
+    const y=now.getFullYear(), m=now.getMonth();
+    fromEl.value = new Date(y,m,1).toISOString().slice(0,10);
+    toEl.value = new Date(y,m+1,0).toISOString().slice(0,10);
+  } else if(kind === 'lastMonth'){
+    const y=now.getFullYear(), m=now.getMonth()-1;
+    fromEl.value = new Date(y,m,1).toISOString().slice(0,10);
+    toEl.value = new Date(y,m+1,0).toISOString().slice(0,10);
+  }
+  renderAll();
+}
+
+function getFilteredTx(){
+  const {from,to} = getDateRange(); const wf = document.getElementById('filterWallet').value;
+  return state.transactions.filter(t=> inRange(t.date, from, to) && (wf==='all' || t.walletId===wf));
+}
+function getFilteredTransfers(){
+  const {from,to} = getDateRange(); const wf = document.getElementById('filterWallet').value;
+  return state.transfers.filter(t=> inRange(t.date, from, to) && (wf==='all' || t.fromWalletId===wf || t.toWalletId===wf));
+}
+function computeSummary(list){
+  let income=0, expense=0;
+  list.forEach(t=>{ if(t.type==='income') income+=Number(t.amount); else expense+=Number(t.amount); });
+  return {income, expense, net: income-expense};
+}
+
+function renderCards(filteredTx){
+  const {income, expense, net} = computeSummary(filteredTx);
+  document.getElementById('sumIncome').textContent = faNum(income);
+  document.getElementById('sumExpense').textContent = faNum(expense);
+  document.getElementById('sumNet').textContent = (net<0?'−':'') + faNum(Math.abs(net));
+  const tb = totalBalance();
+  document.getElementById('totalBalance').textContent = (tb<0?'−':'') + faNum(Math.abs(tb)) + ' تومان';
+}
+
+function renderList(filteredTx, filteredTransfers){
+  const listEl = document.getElementById('txList');
+  listEl.innerHTML = '';
+  const rows = [];
+  filteredTx.forEach(t=> rows.push({kind:'tx', data:t}));
+  filteredTransfers.forEach(t=> rows.push({kind:'transfer', data:t}));
+  if(rows.length===0){
+    listEl.innerHTML = '<div class="empty">در این بازه هیچ تراکنشی ثبت نشده است.</div>';
+    return;
+  }
+  rows.sort((a,b)=> b.data.date.localeCompare(a.data.date));
+  rows.forEach(r=>{
+    const t = r.data;
+    const dateFa = new Date(t.date).toLocaleDateString('fa-IR');
+    const row = document.createElement('div');
+    row.className = 'tx-row';
+    if(r.kind==='tx'){
+      row.innerHTML = `
+        <span class="tx-dot ${t.type}"></span>
+        <div class="tx-main">
+          <div class="tx-desc">${t.desc?escapeHtml(t.desc):escapeHtml(t.category)}</div>
+          <div class="tx-meta">${dateFa} · ${escapeHtml(t.category)} · ${escapeHtml(walletName(t.walletId))}</div>
+        </div>
+        <div class="tx-amt ${t.type}">${t.type==='expense'?'−':'+'}${faNum(t.amount)}</div>
+        <button class="del-btn" data-kind="tx" data-id="${t.id}" aria-label="حذف">✕</button>
+      `;
+    } else {
+      row.innerHTML = `
+        <span class="tx-dot transfer"></span>
+        <div class="tx-main">
+          <div class="tx-desc">${t.desc?escapeHtml(t.desc):'انتقال وجه'}</div>
+          <div class="tx-meta">${dateFa} · ${escapeHtml(walletName(t.fromWalletId))} ← ${escapeHtml(walletName(t.toWalletId))}</div>
+        </div>
+        <div class="tx-amt transfer">${faNum(t.amount)}</div>
+        <button class="del-btn" data-kind="transfer" data-id="${t.id}" aria-label="حذف">✕</button>
+      `;
+    }
+    listEl.appendChild(row);
+  });
+  listEl.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.dataset.id;
+      if(btn.dataset.kind === 'tx'){ state.transactions = state.transactions.filter(t=> String(t.id)!==String(id)); await saveTransactions(); }
+      else { state.transfers = state.transfers.filter(t=> String(t.id)!==String(id)); await saveTransfers(); }
+      renderAll();
+    });
+  });
+}
+
+function monthKey(dateStr){ const d=new Date(dateStr); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function monthLabelFa(key){ const [y,m]=key.split('-'); return new Date(Number(y),Number(m)-1,1).toLocaleDateString('fa-IR',{year:'numeric',month:'long'}); }
+
+function renderChart(){
+  const months=[]; const now=new Date();
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  const wf = document.getElementById('filterWallet').value;
+  const txForChart = wf==='all' ? state.transactions : state.transactions.filter(t=>t.walletId===wf);
+  const incomeData = months.map(mk => txForChart.filter(t=>t.type==='income' && monthKey(t.date)===mk).reduce((s,t)=>s+Number(t.amount),0));
+  const expenseData = months.map(mk => txForChart.filter(t=>t.type==='expense' && monthKey(t.date)===mk).reduce((s,t)=>s+Number(t.amount),0));
+  const labels = months.map(monthLabelFa);
+  const ctx = document.getElementById('monthlyChart').getContext('2d');
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[
+      {label:'درآمد', data:incomeData, backgroundColor:'#17A673', borderRadius:6},
+      {label:'هزینه', data:expenseData, backgroundColor:'#E5484D', borderRadius:6}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{labels:{color:'#16213A', font:{family:'Vazirmatn'}}}, tooltip:{rtl:true, bodyFont:{family:'Vazirmatn'}, titleFont:{family:'Vazirmatn'}} },
+      scales:{
+        x:{ticks:{color:'#7284A0', font:{family:'Vazirmatn'}}, grid:{color:'#E7ECF6'}},
+        y:{ticks:{color:'#7284A0', font:{family:'Vazirmatn'}}, grid:{color:'#E7ECF6'}}
+      }
+    }
+  });
+}
+
+function renderAll(){
+  renderWallets();
+  const filteredTx = getFilteredTx();
+  const filteredTransfers = getFilteredTransfers();
+  renderCards(filteredTx);
+  renderList(filteredTx, filteredTransfers);
+  renderChart();
+}
+
+async function addTransaction(){
+  const amount = Number(document.getElementById('amountInput').value);
+  const date = document.getElementById('dateInput').value || todayISO();
+  if(!amount || amount<=0){ document.getElementById('amountInput').focus(); return; }
+  if(currentType === 'transfer'){
+    const fromWalletId = document.getElementById('fromWalletInput').value;
+    const toWalletId = document.getElementById('toWalletInput').value;
+    if(!fromWalletId || !toWalletId || fromWalletId===toWalletId){ document.getElementById('toWalletInput').focus(); return; }
+    const desc = document.getElementById('transferDescInput').value.trim();
+    state.transfers.push({id:uid(), fromWalletId, toWalletId, amount, date, desc});
+    await saveTransfers();
+    document.getElementById('transferDescInput').value = '';
+  } else {
+    const walletId = document.getElementById('walletInput').value;
+    const category = document.getElementById('catInput').value;
+    const desc = document.getElementById('descInput').value.trim();
+    state.transactions.push({id:uid(), type:currentType, walletId, amount, date, category, desc});
+    await saveTransactions();
+    document.getElementById('descInput').value = '';
+  }
+  document.getElementById('amountInput').value = '';
+  renderAll();
+}
+
+async function addCategory(){
+  const input = document.getElementById('newCatInput');
+  const name = input.value.trim();
+  if(!name) return;
+  if(!state.categories[currentType].includes(name)){
+    state.categories[currentType].push(name);
+    await saveCategories();
+    populateCatSelect();
+    document.getElementById('catInput').value = name;
+  }
+  input.value = '';
+}
+
+async function addWallet(){
+  const input = document.getElementById('newWalletName');
+  const name = input.value.trim();
+  if(!name) return;
+  const icon = WALLET_ICONS[state.wallets.length % WALLET_ICONS.length];
+  state.wallets.push({id:uid(), name, icon});
+  await saveWallets();
+  input.value = '';
+  renderAll();
+}
+
+function initListeners(){
+  document.querySelectorAll('.type-toggle button').forEach(b=> b.addEventListener('click', ()=> setType(b.dataset.t)));
+  document.getElementById('addTxBtn').addEventListener('click', addTransaction);
+  document.getElementById('addCatBtn').addEventListener('click', addCategory);
+  document.getElementById('addWalletBtn').addEventListener('click', addWallet);
+  document.getElementById('fromDate').addEventListener('change', renderAll);
+  document.getElementById('toDate').addEventListener('change', renderAll);
+  document.getElementById('filterWallet').addEventListener('change', ()=>{ activeWalletFilter = document.getElementById('filterWallet').value; renderAll(); });
+  document.querySelectorAll('.qbtn[data-range]').forEach(b=> b.addEventListener('click', ()=> applyQuickRange(b.dataset.range)));
+}
+
+(async function init(){
+  await loadState();
+  document.getElementById('dateInput').value = todayISO();
+  setType('income');
+  initListeners();
+  applyQuickRange('all');
+})();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
