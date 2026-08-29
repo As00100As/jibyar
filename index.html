@@ -203,6 +203,39 @@
   .crypto-meta{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
   .crypto-val{font-family:var(--font-fun);font-size:16px;color:var(--purple);white-space:nowrap;}
   .price-status{font-size:11px;color:var(--text-dim);margin-bottom:10px;}
+
+  /* ---------- Side drawer ---------- */
+  .drawer-backdrop{
+    position:fixed;inset:0;background:rgba(16,24,39,0.45);z-index:40;
+    transition:opacity .2s;
+  }
+  .side-drawer{
+    position:fixed;top:0;right:0;height:100%;width:290px;max-width:82vw;
+    background:#fff;z-index:50;box-shadow:-10px 0 30px rgba(0,0,0,0.15);
+    transform:translateX(100%);transition:transform .25s ease;
+    padding:20px 18px;overflow-y:auto;
+  }
+  .side-drawer.open{transform:translateX(0);}
+  .drawer-backdrop.hidden{display:none;}
+  .drawer-head{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+  .drawer-title{font-family:var(--font-fun);font-size:20px;flex:1;}
+  .drawer-close{background:var(--bg);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--text-dim);}
+  .drawer-item{
+    display:block;width:100%;text-align:right;background:var(--bg);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;font-size:14px;cursor:pointer;color:var(--text);
+  }
+  .drawer-item:hover{border-color:var(--primary);}
+  .drawer-item.danger{color:var(--expense);}
+  .drawer-panel{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+  .drawer-panel-title{font-family:var(--font-fun);font-size:17px;margin-bottom:8px;}
+  .drawer-panel-text{font-size:12.5px;color:var(--text-dim);line-height:1.9;margin:0 0 8px;}
+
+  /* ---------- Category donut ---------- */
+  .cat-chart-wrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+  .cat-chart-box{width:150px;height:150px;flex-shrink:0;}
+  .cat-legend{flex:1;min-width:140px;display:flex;flex-direction:column;gap:6px;}
+  .cat-legend-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);}
+  .cat-legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -241,6 +274,41 @@
 </div>
 
 <div id="appRoot" class="hidden">
+
+<div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+<div id="sideDrawer" class="side-drawer">
+  <div class="drawer-head">
+    <span class="logo-mark">
+      <svg viewBox="0 0 100 74" xmlns="http://www.w3.org/2000/svg">
+        <rect x="12" y="18" width="76" height="52" rx="12" fill="#fff"/>
+        <rect x="63" y="4" width="26" height="20" rx="8" fill="#fff"/>
+        <circle cx="70" cy="46" r="10" fill="#FFD640"/>
+      </svg>
+    </span>
+    <span class="drawer-title">جیب‌یار</span>
+    <button id="closeDrawerBtn" class="drawer-close" aria-label="بستن">✕</button>
+  </div>
+
+  <button class="drawer-item" id="menuAboutBtn">ℹ️ درباره ما</button>
+  <button class="drawer-item" id="menuSupportBtn">💬 ارسال پیام به پشتیبانی</button>
+  <button class="drawer-item" id="menuExportBtn">⬇️ دانلود فایل اطلاعات (بکاپ)</button>
+  <button class="drawer-item danger" id="menuLogoutBtn">🚪 خروج</button>
+
+  <div class="drawer-panel hidden" id="aboutPanel">
+    <div class="drawer-panel-title">درباره جیب‌یار</div>
+    <p class="drawer-panel-text">جیب‌یار یه دستیار مالی شخصیه برای ثبت درآمد، هزینه، مدیریت چند کیف‌پول و پیگیری دارایی ارز دیجیتال — با تاریخ شمسی و طراحی مخصوص فارسی‌زبان‌ها.</p>
+    <p class="drawer-panel-text">تمام اطلاعات فقط روی همین مرورگر ذخیره می‌شه و به هیچ سروری فرستاده نمی‌شه.</p>
+  </div>
+
+  <div class="drawer-panel hidden" id="supportPanel">
+    <div class="drawer-panel-title">ارسال پیام به پشتیبانی</div>
+    <div class="field" style="margin-bottom:10px;"><label>موضوع</label><input type="text" id="supportSubject" placeholder="مثلاً گزارش باگ"></div>
+    <div class="field" style="margin-bottom:10px;"><label>پیام شما</label><textarea id="supportMessage" rows="4" placeholder="توضیح بده چی شده..." style="width:100%;resize:vertical;"></textarea></div>
+    <button class="primary-btn" id="sendSupportBtn" type="button">ارسال از طریق ایمیل</button>
+    <div class="auth-note" style="margin-top:12px;">با زدن دکمه، اپ ایمیل گوشی/کامپیوترت باز می‌شه تا پیام رو مستقیم برای توسعه‌دهنده بفرستی — این وب‌سایت خودش سرور پیام نداره.</div>
+  </div>
+</div>
+
 <div class="wrap">
 
   <div class="appbar">
@@ -255,10 +323,10 @@
         </span>
         جیب‌یار
       </div>
-      <button class="logout-btn" id="logoutBtn">خروج</button>
+      <button class="logout-btn" id="menuBtn" aria-label="منو">☰ منو</button>
     </div>
     <div class="greet" id="greetLine"></div>
-    <div class="balance-label">موجودی کل همه کیف‌پول‌ها</div>
+    <div class="balance-label">موجودی کل (کیف‌پول‌ها + ارز دیجیتال)</div>
     <div class="balance-val" id="totalBalance">۰ تومان</div>
   </div>
 
@@ -323,6 +391,14 @@
   <div class="section card">
     <div class="section-title"><span class="bar"></span>روند ماهانه</div>
     <div class="chart-box"><canvas id="monthlyChart"></canvas></div>
+  </div>
+
+  <div class="section card">
+    <div class="section-title"><span class="bar"></span>سهم هزینه‌ها به تفکیک دسته</div>
+    <div class="cat-chart-wrap">
+      <div class="cat-chart-box"><canvas id="categoryChart"></canvas></div>
+      <div class="cat-legend" id="categoryLegend"></div>
+    </div>
   </div>
 
   <div class="section card">
@@ -405,16 +481,26 @@ function initAuthScreen(){
 
   const signupForm = document.getElementById('signupForm');
   const loginForm = document.getElementById('loginForm');
+  document.getElementById('signupError').textContent = '';
+  document.getElementById('loginError').textContent = '';
 
   if(acc){
     signupForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
     document.getElementById('loginGreeting').textContent = 'سلام ' + acc.name;
     document.getElementById('loginPinWrap').classList.toggle('hidden', !acc.pin);
+    document.getElementById('loginPin').value = '';
   } else {
     signupForm.classList.remove('hidden');
     loginForm.classList.add('hidden');
+    document.getElementById('signupName').value = '';
+    document.getElementById('signupPin').value = '';
   }
+}
+
+function wireAuthListenersOnce(){
+  const signupForm = document.getElementById('signupForm');
+  const loginForm = document.getElementById('loginForm');
 
   document.getElementById('goLogin').addEventListener('click', ()=>{
     signupForm.classList.add('hidden'); loginForm.classList.remove('hidden');
@@ -427,6 +513,7 @@ function initAuthScreen(){
     const name = document.getElementById('signupName').value.trim();
     const pin = document.getElementById('signupPin').value.trim();
     const err = document.getElementById('signupError');
+    err.textContent = '';
     if(!name){ err.textContent = 'لطفاً نامت رو وارد کن.'; return; }
     if(pin && !/^\d{4}$/.test(pin)){ err.textContent = 'رمز باید ۴ رقم باشه یا خالی بذارش.'; return; }
     saveAccount({name, pin});
@@ -437,6 +524,8 @@ function initAuthScreen(){
   document.getElementById('loginBtn').addEventListener('click', ()=>{
     const current = getAccount();
     const err = document.getElementById('loginError');
+    err.textContent = '';
+    if(!current){ initAuthScreen(); return; }
     if(current.pin){
       const pin = document.getElementById('loginPin').value.trim();
       if(pin !== current.pin){ err.textContent = 'رمز اشتباهه، دوباره امتحان کن.'; return; }
@@ -505,7 +594,20 @@ function walletBalance(walletId){
   });
   return bal;
 }
-function totalBalance(){ return state.wallets.reduce((s,w)=> s + walletBalance(w.id), 0); }
+function totalBalance(){
+  const tomanFromWallets = state.wallets.reduce((s,w)=> s + walletBalance(w.id), 0);
+  return tomanFromWallets + cryptoTotalToman();
+}
+function cryptoTotalToman(){
+  const rate = Number(loadUsdRate()) || 0;
+  if(rate<=0) return 0;
+  let total = 0;
+  state.crypto.forEach(h=>{
+    const price = cryptoPrices[h.coinId];
+    if(price) total += price * Number(h.amount) * rate;
+  });
+  return total;
+}
 function walletName(id){ const w = state.wallets.find(x=>x.id===id); return w ? w.name : '—'; }
 
 function renderWallets(){
@@ -742,7 +844,7 @@ async function refreshCryptoPrices(){
   }catch(e){
     statusEl.textContent = 'به‌روزرسانی قیمت‌ها ناموفق بود (اتصال اینترنت یا دسترسی به API را بررسی کن). قیمت‌های قبلی نمایش داده می‌شوند.';
   }
-  renderCrypto();
+  renderAll();
 }
 
 async function addCrypto(){
@@ -752,9 +854,52 @@ async function addCrypto(){
   state.crypto.push({id:uid(), coinId, amount});
   saveCrypto();
   document.getElementById('cryptoAmount').value = '';
-  renderCrypto();
-  refreshCryptoPrices();
+  renderAll();
+  await refreshCryptoPrices();
 }
+
+let categoryChartInstance = null;
+const CAT_COLORS = ['#2F6FED','#17A673','#E5484D','#E0A82E','#7C6FE0','#00B8D9','#FF7A59','#5B8DEF','#36B37E','#FF5630'];
+
+function renderCategoryChart(filteredTx){
+  const expenseTx = filteredTx.filter(t=> t.type==='expense');
+  const byCat = {};
+  expenseTx.forEach(t=>{ byCat[t.category] = (byCat[t.category]||0) + Number(t.amount); });
+  const cats = Object.keys(byCat);
+  const values = cats.map(c=> byCat[c]);
+  const colors = cats.map((c,i)=> CAT_COLORS[i % CAT_COLORS.length]);
+
+  const ctx = document.getElementById('categoryChart').getContext('2d');
+  if(categoryChartInstance) categoryChartInstance.destroy();
+
+  const legendEl = document.getElementById('categoryLegend');
+  legendEl.innerHTML = '';
+  if(cats.length === 0){
+    legendEl.innerHTML = '<div class="empty" style="padding:6px;">هزینه‌ای برای نمایش نیست.</div>';
+    categoryChartInstance = new Chart(ctx, { type:'doughnut', data:{labels:[], datasets:[{data:[1], backgroundColor:['#E7ECF6']}]}, options:{plugins:{legend:{display:false}, tooltip:{enabled:false}}, cutout:'68%'} });
+    return;
+  }
+  const total = values.reduce((a,b)=>a+b,0);
+  categoryChartInstance = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels:cats, datasets:[{ data:values, backgroundColor:colors, borderWidth:0 }] },
+    options:{
+      cutout:'68%', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{rtl:true, bodyFont:{family:'Vazirmatn'}, titleFont:{family:'Vazirmatn'}}
+      }
+    }
+  });
+  cats.forEach((c,i)=>{
+    const pct = total>0 ? Math.round((values[i]/total)*100) : 0;
+    const row = document.createElement('div');
+    row.className = 'cat-legend-row';
+    row.innerHTML = `<span class="cat-legend-dot" style="background:${colors[i]}"></span><span>${escapeHtml(c)} — ${toFaDigits(pct)}٪</span>`;
+    legendEl.appendChild(row);
+  });
+}
+
 
 function renderAll(){
   renderWallets();
@@ -763,6 +908,7 @@ function renderAll(){
   renderCards(filteredTx);
   renderList(filteredTx, filteredTransfers);
   renderChart();
+  renderCategoryChart(filteredTx);
   renderCrypto();
 }
 
@@ -825,8 +971,47 @@ function initListeners(){
   document.querySelectorAll('.qbtn[data-range]').forEach(b=> b.addEventListener('click', ()=> applyQuickRange(b.dataset.range)));
   document.getElementById('addCryptoBtn').addEventListener('click', addCrypto);
   document.getElementById('refreshPricesBtn').addEventListener('click', refreshCryptoPrices);
-  document.getElementById('usdRateInput').addEventListener('change', ()=>{ saveUsdRate(getUsdRate()); renderCrypto(); });
-  document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  document.getElementById('usdRateInput').addEventListener('change', ()=>{ saveUsdRate(getUsdRate()); renderAll(); });
+
+  const drawer = document.getElementById('sideDrawer');
+  const backdrop = document.getElementById('drawerBackdrop');
+  const openDrawer = ()=>{ drawer.classList.add('open'); backdrop.classList.remove('hidden'); };
+  const closeDrawer = ()=>{ drawer.classList.remove('open'); backdrop.classList.add('hidden'); };
+  document.getElementById('menuBtn').addEventListener('click', openDrawer);
+  document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
+  backdrop.addEventListener('click', closeDrawer);
+
+  const aboutPanel = document.getElementById('aboutPanel');
+  const supportPanel = document.getElementById('supportPanel');
+  document.getElementById('menuAboutBtn').addEventListener('click', ()=>{
+    aboutPanel.classList.toggle('hidden');
+    supportPanel.classList.add('hidden');
+  });
+  document.getElementById('menuSupportBtn').addEventListener('click', ()=>{
+    supportPanel.classList.toggle('hidden');
+    aboutPanel.classList.add('hidden');
+  });
+  document.getElementById('sendSupportBtn').addEventListener('click', ()=>{
+    const subject = document.getElementById('supportSubject').value.trim() || 'پیام از جیب‌یار';
+    const msg = document.getElementById('supportMessage').value.trim();
+    const body = encodeURIComponent(msg || '');
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+  });
+  document.getElementById('menuExportBtn').addEventListener('click', ()=>{
+    const backup = {
+      wallets: state.wallets, transactions: state.transactions, transfers: state.transfers,
+      categories: state.categories, crypto: state.crypto, usdRate: loadUsdRate(),
+      exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'jibyar-backup-' + todayISO() + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById('menuLogoutBtn').addEventListener('click', ()=>{
+    closeDrawer();
     sessionStorage.removeItem('jibyar_unlocked');
     document.getElementById('appRoot').classList.add('hidden');
     document.getElementById('authScreen').classList.remove('hidden');
@@ -845,9 +1030,11 @@ function bootApp(){
   initListeners();
   applyQuickRange('all');
   renderCrypto();
+  if(state.crypto.length > 0){ refreshCryptoPrices(); }
 }
 
 initAuthScreen();
+wireAuthListenersOnce();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
