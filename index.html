@@ -11,7 +11,6 @@
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Lalezar&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
   :root{
     --bg:#F3F6FC;
@@ -289,10 +288,15 @@
     <button id="closeDrawerBtn" class="drawer-close" aria-label="بستن">✕</button>
   </div>
 
+  <button class="drawer-item" id="menuInstallBtn">📲 نصب برنامه روی گوشی</button>
   <button class="drawer-item" id="menuAboutBtn">ℹ️ درباره ما</button>
   <button class="drawer-item" id="menuSupportBtn">💬 ارسال پیام به پشتیبانی</button>
-  <button class="drawer-item" id="menuExportBtn">⬇️ دانلود فایل اطلاعات (بکاپ)</button>
   <button class="drawer-item danger" id="menuLogoutBtn">🚪 خروج</button>
+
+  <div class="drawer-panel hidden" id="installPanel">
+    <div class="drawer-panel-title">نصب روی گوشی</div>
+    <p class="drawer-panel-text" id="installInstructions">برای نصب، از منوی مرورگر (سه‌نقطه بالای صفحه) گزینه‌ی «Add to Home screen» یا «نصب برنامه» رو انتخاب کن. توی آیفون/سافاری: دکمه‌ی Share رو بزن، بعد «Add to Home Screen».</p>
+  </div>
 
   <div class="drawer-panel hidden" id="aboutPanel">
     <div class="drawer-panel-title">درباره جیب‌یار</div>
@@ -323,7 +327,10 @@
         </span>
         جیب‌یار
       </div>
-      <button class="logout-btn" id="menuBtn" aria-label="منو">☰ منو</button>
+      <div style="display:flex;gap:8px;">
+        <button class="logout-btn hidden" id="installBtn">📲 نصب برنامه</button>
+        <button class="logout-btn" id="menuBtn" aria-label="منو">☰ منو</button>
+      </div>
     </div>
     <div class="greet" id="greetLine"></div>
     <div class="balance-label">موجودی کل (کیف‌پول‌ها + ارز دیجیتال)</div>
@@ -430,6 +437,57 @@
 </div>
 
 <script>
+/* ================= Install prompt (captured early, shown once app UI is visible) ================= */
+window.deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  window.deferredInstallPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if(btn) btn.classList.remove('hidden');
+});
+window.addEventListener('appinstalled', ()=>{
+  window.deferredInstallPrompt = null;
+  const btn = document.getElementById('installBtn');
+  if(btn) btn.classList.add('hidden');
+});
+
+/* ================= Resilient Chart.js loader (falls back across CDNs) ================= */
+function loadScriptOnce(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = src; s.onload = ()=>resolve(true); s.onerror = ()=>reject(new Error('load failed: '+src));
+    document.head.appendChild(s);
+  });
+}
+let chartJsReadyPromise = null;
+function ensureChartJs(){
+  if(chartJsReadyPromise) return chartJsReadyPromise;
+  chartJsReadyPromise = (async ()=>{
+    if(window.Chart) return true;
+    const sources = [
+      'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js',
+      'https://unpkg.com/chart.js@4.4.4/dist/chart.umd.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js'
+    ];
+    for(const src of sources){
+      try{ await loadScriptOnce(src); if(window.Chart) return true; }catch(e){ /* try next source */ }
+    }
+    return false;
+  })();
+  return chartJsReadyPromise;
+}
+function showChartUnavailable(canvasId){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const wrap = canvas.parentElement;
+  if(wrap && !wrap.querySelector('.chart-fallback-msg')){
+    const msg = document.createElement('div');
+    msg.className = 'chart-fallback-msg empty';
+    msg.textContent = 'نمودار در دسترس نیست — اتصال اینترنت را بررسی کن و صفحه را رفرش کن.';
+    wrap.appendChild(msg);
+  }
+}
+
 /* ================= Jalali date helpers (self-contained, no external lib) ================= */
 function toJalali(gy, gm, gd){
   var g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
@@ -750,7 +808,9 @@ function renderList(filteredTx, filteredTransfers){
   });
 }
 
-function renderChart(){
+async function renderChart(){
+  const ok = await ensureChartJs();
+  if(!ok){ showChartUnavailable('monthlyChart'); return; }
   const months=[]; const now=new Date();
   for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); months.push({y:d.getFullYear(), m:d.getMonth()+1}); }
   const wf = document.getElementById('filterWallet').value;
@@ -761,21 +821,23 @@ function renderChart(){
   const labels = months.map(({y,m}) => jalaliMonthLabel(y,m));
   const ctx = document.getElementById('monthlyChart').getContext('2d');
   if(chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(ctx, {
-    type:'bar',
-    data:{ labels, datasets:[
-      {label:'درآمد', data:incomeData, backgroundColor:'#17A673', borderRadius:6},
-      {label:'هزینه', data:expenseData, backgroundColor:'#E5484D', borderRadius:6}
-    ]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{labels:{color:'#16213A', font:{family:'Vazirmatn'}}}, tooltip:{rtl:true, bodyFont:{family:'Vazirmatn'}, titleFont:{family:'Vazirmatn'}} },
-      scales:{
-        x:{ticks:{color:'#7284A0', font:{family:'Vazirmatn'}}, grid:{color:'#E7ECF6'}},
-        y:{ticks:{color:'#7284A0', font:{family:'Vazirmatn'}}, grid:{color:'#E7ECF6'}}
+  try{
+    chartInstance = new Chart(ctx, {
+      type:'bar',
+      data:{ labels, datasets:[
+        {label:'درآمد', data:incomeData, backgroundColor:'#17A673', borderRadius:6},
+        {label:'هزینه', data:expenseData, backgroundColor:'#E5484D', borderRadius:6}
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{labels:{color:'#16213A', font:{family:'Vazirmatn'}}}, tooltip:{rtl:true, bodyFont:{family:'Vazirmatn'}, titleFont:{family:'Vazirmatn'}} },
+        scales:{
+          x:{ticks:{color:'#7284A0', font:{family:'Vazirmatn'}}, grid:{color:'#E7ECF6'}},
+          y:{ticks:{color:'#7284A0', font:{family:'Vazirmatn'}}, grid:{color:'#E7ECF6'}}
+        }
       }
-    }
-  });
+    });
+  }catch(e){ showChartUnavailable('monthlyChart'); }
 }
 
 /* ---------- Crypto ---------- */
@@ -861,7 +923,9 @@ async function addCrypto(){
 let categoryChartInstance = null;
 const CAT_COLORS = ['#2F6FED','#17A673','#E5484D','#E0A82E','#7C6FE0','#00B8D9','#FF7A59','#5B8DEF','#36B37E','#FF5630'];
 
-function renderCategoryChart(filteredTx){
+async function renderCategoryChart(filteredTx){
+  const ok = await ensureChartJs();
+  if(!ok){ showChartUnavailable('categoryChart'); return; }
   const expenseTx = filteredTx.filter(t=> t.type==='expense');
   const byCat = {};
   expenseTx.forEach(t=>{ byCat[t.category] = (byCat[t.category]||0) + Number(t.amount); });
@@ -874,30 +938,32 @@ function renderCategoryChart(filteredTx){
 
   const legendEl = document.getElementById('categoryLegend');
   legendEl.innerHTML = '';
-  if(cats.length === 0){
-    legendEl.innerHTML = '<div class="empty" style="padding:6px;">هزینه‌ای برای نمایش نیست.</div>';
-    categoryChartInstance = new Chart(ctx, { type:'doughnut', data:{labels:[], datasets:[{data:[1], backgroundColor:['#E7ECF6']}]}, options:{plugins:{legend:{display:false}, tooltip:{enabled:false}}, cutout:'68%'} });
-    return;
-  }
-  const total = values.reduce((a,b)=>a+b,0);
-  categoryChartInstance = new Chart(ctx, {
-    type:'doughnut',
-    data:{ labels:cats, datasets:[{ data:values, backgroundColor:colors, borderWidth:0 }] },
-    options:{
-      cutout:'68%', responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{rtl:true, bodyFont:{family:'Vazirmatn'}, titleFont:{family:'Vazirmatn'}}
-      }
+  try{
+    if(cats.length === 0){
+      legendEl.innerHTML = '<div class="empty" style="padding:6px;">هزینه‌ای برای نمایش نیست.</div>';
+      categoryChartInstance = new Chart(ctx, { type:'doughnut', data:{labels:[], datasets:[{data:[1], backgroundColor:['#E7ECF6']}]}, options:{plugins:{legend:{display:false}, tooltip:{enabled:false}}, cutout:'68%'} });
+      return;
     }
-  });
-  cats.forEach((c,i)=>{
-    const pct = total>0 ? Math.round((values[i]/total)*100) : 0;
-    const row = document.createElement('div');
-    row.className = 'cat-legend-row';
-    row.innerHTML = `<span class="cat-legend-dot" style="background:${colors[i]}"></span><span>${escapeHtml(c)} — ${toFaDigits(pct)}٪</span>`;
-    legendEl.appendChild(row);
-  });
+    const total = values.reduce((a,b)=>a+b,0);
+    categoryChartInstance = new Chart(ctx, {
+      type:'doughnut',
+      data:{ labels:cats, datasets:[{ data:values, backgroundColor:colors, borderWidth:0 }] },
+      options:{
+        cutout:'68%', responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{rtl:true, bodyFont:{family:'Vazirmatn'}, titleFont:{family:'Vazirmatn'}}
+        }
+      }
+    });
+    cats.forEach((c,i)=>{
+      const pct = total>0 ? Math.round((values[i]/total)*100) : 0;
+      const row = document.createElement('div');
+      row.className = 'cat-legend-row';
+      row.innerHTML = `<span class="cat-legend-dot" style="background:${colors[i]}"></span><span>${escapeHtml(c)} — ${toFaDigits(pct)}٪</span>`;
+      legendEl.appendChild(row);
+    });
+  }catch(e){ showChartUnavailable('categoryChart'); }
 }
 
 
@@ -983,32 +1049,40 @@ function initListeners(){
 
   const aboutPanel = document.getElementById('aboutPanel');
   const supportPanel = document.getElementById('supportPanel');
+  const installPanel = document.getElementById('installPanel');
+  const closeOtherPanels = (keep)=>{
+    [aboutPanel, supportPanel, installPanel].forEach(p=>{ if(p!==keep) p.classList.add('hidden'); });
+  };
   document.getElementById('menuAboutBtn').addEventListener('click', ()=>{
-    aboutPanel.classList.toggle('hidden');
-    supportPanel.classList.add('hidden');
+    const willShow = aboutPanel.classList.contains('hidden');
+    closeOtherPanels(null);
+    aboutPanel.classList.toggle('hidden', !willShow);
   });
   document.getElementById('menuSupportBtn').addEventListener('click', ()=>{
-    supportPanel.classList.toggle('hidden');
-    aboutPanel.classList.add('hidden');
+    const willShow = supportPanel.classList.contains('hidden');
+    closeOtherPanels(null);
+    supportPanel.classList.toggle('hidden', !willShow);
   });
+  const installHandler = async ()=>{
+    if(window.deferredInstallPrompt){
+      window.deferredInstallPrompt.prompt();
+      await window.deferredInstallPrompt.userChoice;
+      window.deferredInstallPrompt = null;
+      document.getElementById('installBtn').classList.add('hidden');
+    } else {
+      const willShow = installPanel.classList.contains('hidden');
+      closeOtherPanels(null);
+      installPanel.classList.toggle('hidden', !willShow);
+      if(!drawer.classList.contains('open')) openDrawer();
+    }
+  };
+  document.getElementById('installBtn').addEventListener('click', installHandler);
+  document.getElementById('menuInstallBtn').addEventListener('click', installHandler);
   document.getElementById('sendSupportBtn').addEventListener('click', ()=>{
     const subject = document.getElementById('supportSubject').value.trim() || 'پیام از جیب‌یار';
     const msg = document.getElementById('supportMessage').value.trim();
     const body = encodeURIComponent(msg || '');
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
-  });
-  document.getElementById('menuExportBtn').addEventListener('click', ()=>{
-    const backup = {
-      wallets: state.wallets, transactions: state.transactions, transfers: state.transfers,
-      categories: state.categories, crypto: state.crypto, usdRate: loadUsdRate(),
-      exportedAt: new Date().toISOString()
-    };
-    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'jibyar-backup-' + todayISO() + '.json';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   });
   document.getElementById('menuLogoutBtn').addEventListener('click', ()=>{
     closeDrawer();
